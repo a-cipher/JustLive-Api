@@ -194,7 +194,7 @@ public class AreaService {
                 resultList.add(new ArrayList<>());
             }
         });
-        return resultList;
+        return resultList.stream().filter(t -> !t.isEmpty()).collect(Collectors.toList());
     }
 
     /**

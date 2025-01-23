@@ -111,15 +111,15 @@ public class Huya implements BasePlatform {
         LinkedHashMap<String, List<UrlQuality>> resultMap = new LinkedHashMap<>();
         List<UrlQuality> qualityResultList = new ArrayList<>();
         try {
-            String resultText = HttpRequest.get("https://m.huya.com/" + roomId)
+            String resultText = HttpRequest.get("https://mp.huya.com/cache.php?m=Live&do=profileRoom&roomid=" + roomId)
                     .header(Header.USER_AGENT, "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.91 Mobile Safari/537.36 Edg/117.0.0.0")
                     .execute().body();
-            String pattern = "window\\.HNF_GLOBAL_INIT.=.\\{(.*?)\\}.</script>";
-            String text = ReUtil.get(pattern, resultText, 1);
-            JSONObject jsonObj = JSONUtil.parseObj("{" + text + "}");
+            // 播放流信息
+            JSONObject streamData = JSONUtil.parseObj(resultText).getJSONObject("data").getJSONObject("stream");
 
-            JSONArray biterates = jsonObj.getJSONObject("roomInfo").getJSONObject("tLiveInfo").getJSONObject("tLiveStreamInfo").getJSONObject("vBitRateInfo").getJSONArray("value");
-            JSONArray lines = jsonObj.getJSONObject("roomInfo").getJSONObject("tLiveInfo").getJSONObject("tLiveStreamInfo").getJSONObject("vStreamInfo").getJSONArray("value");
+            // 清晰度，线路信息
+            JSONArray biterates = streamData.getJSONObject("flv").getJSONArray("rateArray");
+            JSONArray lines = streamData.getJSONArray("baseSteamInfoList");
 
             for (int j = 0; j < biterates.size(); j++) {
                 JSONObject biterate = (JSONObject) biterates.get(j);
@@ -132,7 +132,7 @@ public class Huya implements BasePlatform {
                     JSONObject line = (JSONObject) lines.get(i);
                     String streamName = line.getStr("sStreamName");
                     String streamUrl = line.getStr("sFlvUrl") + "/" + streamName + ".flv";
-                    streamUrl += "?" + processAnticode(line.getStr("sFlvAntiCode"), getUid(13, 10), streamName);
+                    streamUrl += "?" + line.getStr("sFlvAntiCode");
                     if (bitRate > 0) {
                         streamUrl += "&ratio=" + bitRate;
                     }
